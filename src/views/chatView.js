@@ -60,84 +60,57 @@ function renderChatHeader(chat) {
 function renderMessages(messages) {
   const messagesContainer = document.getElementById('messages-container');
   const messagesList = document.getElementById('messages-list');
-  
-  messagesContainer.classList.remove('hidden');
   messagesList.innerHTML = '';
   
-  // Add date separator
+  // Ajout de la date
   const dateSeparator = document.createElement('div');
   dateSeparator.className = 'flex justify-center my-4';
-  
-  const dateElement = document.createElement('div');
-  dateElement.className = 'bg-[#182229] text-[#8696a0] text-xs px-3 py-1 rounded-md';
+  const dateElement = document.createElement('span');
+  dateElement.className = 'bg-[#182229] text-[#8696a0] text-xs px-3 py-1 rounded-lg';
   dateElement.textContent = 'AUJOURD\'HUI';
   
   dateSeparator.appendChild(dateElement);
   messagesList.appendChild(dateSeparator);
-  
-  // Add messages
+
   messages.forEach(message => {
     const messageElement = createMessageElement(message);
     messagesList.appendChild(messageElement);
   });
-  
-  // Scroll to bottom
+
+  // Scroll vers le bas
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  
-  // Show message input
-  document.getElementById('message-input-container').classList.remove('hidden');
-  
-  // Hide welcome screen
-  document.getElementById('welcome-screen').classList.add('hidden');
 }
 
 // Create a single message element
 function createMessageElement(message) {
   const messageElement = document.createElement('div');
-  messageElement.className = `flex ${message.isMe ? 'justify-end' : 'justify-start'} mb-4`;
+  
+  // Conteneur principal du message avec marge
+  messageElement.className = `flex ${message.isMe ? 'justify-end' : 'justify-start'} mb-2 px-4`;
   
   const messageBubble = document.createElement('div');
-  messageBubble.className = `max-w-xs md:max-w-md rounded-lg px-4 py-2 ${
-    message.isMe ? 'bg-[#005c4b] rounded-tr-none' : 'bg-[#202c33] rounded-tl-none'
+  // Style amélioré pour la bulle de message
+  messageBubble.className = `relative max-w-[65%] rounded-lg px-3 py-2 ${
+    message.isMe 
+      ? 'bg-[#005c4b] rounded-tr-none ml-auto' 
+      : 'bg-[#202c33] rounded-tl-none'
   }`;
-  
-  if (message.isImage) {
-    const imageContainer = document.createElement('div');
-    imageContainer.className = 'w-64 h-48 bg-gray-700 rounded overflow-hidden flex items-center justify-center';
-    
-    if (message.imageData) {
-      const img = document.createElement('img');
-      img.src = message.imageData;
-      img.className = 'w-full h-full object-cover';
-      imageContainer.appendChild(img);
-    } else {
-      const imageIcon = document.createElement('span');
-      imageIcon.className = 'text-gray-400';
-      imageIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
-      imageContainer.appendChild(imageIcon);
-    }
-    
-    messageBubble.appendChild(imageContainer);
-  } else if (message.isVoice) {
-    const voiceContainer = createVoiceMessageElement(message);
-    messageBubble.appendChild(voiceContainer);
-  } else if (message.isFile) {
-    const fileContainer = createFileMessageElement(message);
-    messageBubble.appendChild(fileContainer);
-  } else {
-    const messageText = document.createElement('p');
-    messageText.className = 'text-white break-words';
-    messageText.innerHTML = parseEmojis(message.text);
-    messageBubble.appendChild(messageText);
-  }
-  
+
+  // Ajout du texte du message
+  const messageText = document.createElement('div');
+  messageText.className = 'text-white text-sm break-words';
+  messageText.innerHTML = parseEmojis(message.text);
+
+  // Ajout du timestamp
   const timeStamp = document.createElement('span');
-  timeStamp.className = 'text-xs text-gray-400 ml-2 self-end mt-1';
+  timeStamp.className = 'text-[11px] text-gray-400 ml-2 float-right mt-1';
   timeStamp.textContent = message.timestamp;
-  
+
+  // Assemblage des éléments
+  messageBubble.appendChild(messageText);
   messageBubble.appendChild(timeStamp);
   messageElement.appendChild(messageBubble);
-  
+
   return messageElement;
 }
 
@@ -248,7 +221,7 @@ function createFileMessageElement(message) {
   return fileContainer;
 }
 
-function parseEmojis(text) {
+function parseEmojis(text = '') {
   // Simple emoji parsing - in a real app you'd use a proper emoji library
   return text.replace(/:\)/g, '😊')
              .replace(/:\(/g, '😢')
@@ -516,6 +489,46 @@ function filterChats(filterType) {
         break;
       default:
         chat.style.display = 'flex';
+    }
+  });
+}
+
+// Add this function after the existing UI rendering functions
+function renderAttachmentModal(position) {
+  // Remove any existing modals
+  const existingModal = document.querySelector('.attachment-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'attachment-modal absolute bg-[#233138] rounded-lg shadow-lg z-50';
+  modal.style.right = `${position.x}px`;
+  modal.style.top = `${position.y}px`;
+
+  const options = [
+    {icon: '📷', label: 'Photo/Vidéo'},
+    {icon: '📎', label: 'Document'}, 
+    {icon: '📍', label: 'Localisation'},
+    {icon: '👤', label: 'Contact'}
+  ];
+
+  const optionsList = options.map(opt => `
+    <button class="w-full px-4 py-2 flex items-center gap-3 hover:bg-[#182229] text-white text-sm">
+      <span>${opt.icon}</span>
+      <span>${opt.label}</span>
+    </button>
+  `).join('');
+
+  modal.innerHTML = optionsList;
+
+  document.body.appendChild(modal);
+
+  // Close modal when clicking outside
+  document.addEventListener('click', function closeModal(e) {
+    if (!modal.contains(e.target)) {
+      modal.remove();
+      document.removeEventListener('click', closeModal);
     }
   });
 }

@@ -53,46 +53,65 @@ function formatTime(date) {
 // Function to render icons in the application
 export function renderIcons() {
   // Navigation icons
-  document.getElementById('status-btn').querySelector('div').innerHTML = StatusIcon;
-  document.getElementById('channels-btn').querySelector('div').innerHTML = ChannelsIcon;
-  document.getElementById('chats-btn').querySelector('div').innerHTML = MessageIcon;
-  document.getElementById('communities-btn').querySelector('div').innerHTML = CommunitiesIcon;
-  document.getElementById('settings-btn').querySelector('div').innerHTML = SettingsIcon;
-  
+  const navigationIcons = {
+    'status-btn': StatusIcon,
+    'channels-btn': ChannelsIcon,
+    'chats-btn': MessageIcon,
+    'communities-btn': CommunitiesIcon,
+    'settings-btn': SettingsIcon
+  };
+
+  // Safely set navigation icons
+  Object.entries(navigationIcons).forEach(([id, icon]) => {
+    const element = document.getElementById(id)?.querySelector('div');
+    if (element) {
+      element.innerHTML = icon;
+    }
+  });
+
   // Header icons
-  document.getElementById('new-chat-btn').querySelector('div').innerHTML = NewChatIcon;
-  document.getElementById('menu-btn').querySelector('div').innerHTML = MenuIcon;
-  
+  const headerElements = {
+    'new-chat-btn': NewChatIcon,
+    'menu-btn': MenuIcon,
+  };
+
+  Object.entries(headerElements).forEach(([id, icon]) => {
+    const element = document.getElementById(id)?.querySelector('div');
+    if (element) {
+      element.innerHTML = icon;
+    }
+  });
+
   // Search icon
-  document.getElementById('search-container').querySelector('span div').innerHTML = SearchIcon;
-  
-  // Welcome screen
-  document.querySelector('#welcome-screen .w-56').innerHTML = MessageIcon;
-  document.querySelector('#welcome-screen .mt-8 span div').innerHTML = LockIcon;
-  
-  // Chat header (will be visible when chat is selected)
-  if (document.getElementById('search-chat-btn')) {
-    document.getElementById('search-chat-btn').querySelector('div').innerHTML = SearchIcon;
-  }
-  if (document.getElementById('chat-menu-btn')) {
-    document.getElementById('chat-menu-btn').querySelector('div').innerHTML = MenuIcon;
-  }
-  
-  // Message input icons
-  const emojiBtn = document.getElementById('emoji-btn');
-  if (emojiBtn) {
-    emojiBtn.querySelector('div').innerHTML = EmojiIcon;
+  const searchContainer = document.getElementById('search-container')?.querySelector('span div');
+  if (searchContainer) {
+    searchContainer.innerHTML = SearchIcon;
   }
 
-  const attachBtn = document.getElementById('attach-btn');
-  if (attachBtn) {
-    attachBtn.querySelector('div').innerHTML = AttachIcon;
+  // Welcome screen icons
+  const welcomeMessageIcon = document.querySelector('#welcome-screen .w-56');
+  if (welcomeMessageIcon) {
+    welcomeMessageIcon.innerHTML = MessageIcon;
   }
 
-  const voiceBtn = document.getElementById('voice-btn');
-  if (voiceBtn) {
-    voiceBtn.querySelector('div').innerHTML = MicIcon;
+  const welcomeLockIcon = document.querySelector('#welcome-screen .mt-8 span div');
+  if (welcomeLockIcon) {
+    welcomeLockIcon.innerHTML = LockIcon;
   }
+
+  // Chat input icons
+  const chatInputIcons = {
+    'emoji-btn': EmojiIcon,
+    'attach-btn': AttachIcon,
+    'voice-btn': MicIcon
+  };
+
+  Object.entries(chatInputIcons).forEach(([id, icon]) => {
+    const element = document.getElementById(id)?.querySelector('div');
+    if (element) {
+      element.innerHTML = icon;
+    }
+  });
 }
 
 export { generateRandomAvatar, formatDate, formatTime };

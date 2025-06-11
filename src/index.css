@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Ajoutez ces styles dans votre fichier CSS */
+.status-view {
+  min-width: 400px;
+  max-width: 400px;
+}
+
+#chat-content {
+  display: flex;
+}
+
+.welcome-screen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #222e35;
+}

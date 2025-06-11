@@ -3,6 +3,8 @@ import { initChat } from './chatController.js';
 import { renderSettingsView } from '../views/settingsView.js';
 import { initMenuController } from './menuController.js';
 import { initChatFilters } from '../views/chatView.js';
+import { createStatusView } from '../views/statusView.js';
+import { addStatus, getMyStatuses } from '../models/statusModel.js';
 
 function initApp() {
   setCurrentUserAvatar();
@@ -13,6 +15,7 @@ function initApp() {
   initMenuController();
 
   initNavigation();
+  initStatusTab();
 }
 
 function setCurrentUserAvatar() {
@@ -42,6 +45,7 @@ function initNavigation() {
 }
 
 function switchTab(tabName) {
+  // Gérer les boutons
   const allButtons = document.querySelectorAll('#side-nav button');
   allButtons.forEach(button => {
     button.classList.remove('bg-[#00a884]', 'text-white');
@@ -53,8 +57,71 @@ function switchTab(tabName) {
     activeButton.classList.remove('bg-[#2a3942]', 'text-gray-400');
     activeButton.classList.add('bg-[#00a884]', 'text-white');
   }
-  
-  console.log(`Switched to ${tabName} tab`);
+
+  // Gérer l'affichage des contenus
+  const containers = {
+    chats: document.getElementById('chat-list-container'),
+    status: document.getElementById('status-container'),
+    channels: document.getElementById('channels-container'),
+    communities: document.getElementById('communities-container'),
+    settings: document.getElementById('settings-container')
+  };
+
+  // Cacher tous les conteneurs
+  Object.values(containers).forEach(container => {
+    if (container) container.classList.add('hidden');
+  });
+
+  // Afficher le conteneur actif
+  const activeContainer = containers[tabName];
+  if (activeContainer) {
+    activeContainer.classList.remove('hidden');
+    
+    // Initialiser la vue si nécessaire
+    if (tabName === 'status' && !activeContainer.hasChildNodes()) {
+      const statusView = createStatusView();
+      activeContainer.appendChild(statusView);
+    }
+  }
+}
+
+function initStatusTab() {
+  const statusTab = document.getElementById('status-btn');
+  const mainContent = document.getElementById('chat-content');
+  const chatListContainer = document.getElementById('chat-list-container');
+
+  if (!statusTab || !mainContent) return;
+
+  statusTab.addEventListener('click', () => {
+    // Cacher la liste des chats
+    if (chatListContainer) {
+      chatListContainer.classList.add('hidden');
+    }
+
+    // Afficher la vue des statuts avec l'écran de bienvenue
+    let statusView = document.querySelector('.status-view');
+    if (!statusView) {
+      statusView = createStatusView();
+      mainContent.insertBefore(statusView, mainContent.firstChild);
+    }
+    statusView.classList.remove('hidden');
+
+    // Afficher l'écran de bienvenue à droite
+    let welcomeScreen = document.querySelector('.welcome-screen');
+    if (!welcomeScreen) {
+      welcomeScreen = document.createElement('div');
+      welcomeScreen.className = 'welcome-screen';
+      welcomeScreen.innerHTML = `
+        <div class="text-center">
+          <img src="/whatsapp-web.svg" alt="WhatsApp" class="w-80 mb-8">
+          <h1 class="text-3xl text-gray-200 mb-4">WhatsApp Web</h1>
+          <p class="text-gray-400">Envoyez et recevez des messages sans conserver votre téléphone connecté.</p>
+        </div>
+      `;
+      mainContent.appendChild(welcomeScreen);
+    }
+    welcomeScreen.classList.remove('hidden');
+  });
 }
 
 export { initApp };

@@ -219,4 +219,11 @@ function simulateReply(chatId) {
   }, 2000);
 }
 
+// Message reçu
+const message = {
+  text: "Message reçu",
+  isMe: false, // Pour les messages que vous recevez
+  timestamp: "..."
+};
+
 export { initChat };
