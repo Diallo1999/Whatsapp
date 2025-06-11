@@ -1,9 +1,9 @@
 import { updateLastMessage, createNewChat, getAllChats, getChatById } from './chatModel.js';
 
-// Define API_URL constant
-const API_URL = 'http://localhost:3000';
+// Modifier l'URL de l'API
+const API_URL = 'https://server-vo8j.onrender.com';
 
-// Initialiser un objet vide pour les messages
+// Initialiser un objet vide pour les messages  
 let messages = {};
 
 // Charger les messages depuis le localStorage
@@ -26,7 +26,7 @@ async function addMessage(chatId, text) {
   try {
     const message = {
       id: Date.now().toString(),
-      chatId: chatId,
+      chatId: chatId, 
       text: text,
       timestamp: new Date().toLocaleTimeString('fr-FR', {
         hour: '2-digit',
@@ -35,8 +35,8 @@ async function addMessage(chatId, text) {
       sent: true
     };
 
-    // Ajouter à l'API
-    const response = await fetch('http://localhost:3000/messages', {
+    // Modifier l'URL de l'appel API
+    const response = await fetch(`${API_URL}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

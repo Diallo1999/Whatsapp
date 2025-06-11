@@ -1,7 +1,7 @@
 import { generateRandomAvatar } from '../utils/helpers.js';
 import { generateInitialsAvatar } from '../utils/avatarGenerator.js';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://server-vo8j.onrender.com';
 
 // Initialiser les tableaux vides
 let chats = [];
