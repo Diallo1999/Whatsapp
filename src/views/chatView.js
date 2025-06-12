@@ -130,6 +130,18 @@ function formatDateSeparator(dateString) {
 
 // Create a single message element with WhatsApp styling
 function createMessageElement(message) {
+  if (message.isSystem) {
+    const systemMessage = document.createElement('div');
+    systemMessage.className = 'flex justify-center my-4';
+    
+    const messageContent = document.createElement('div');
+    messageContent.className = 'bg-[#182229] text-[#8696a0] text-xs px-3 py-1 rounded-md shadow-sm';
+    messageContent.textContent = message.text;
+    
+    systemMessage.appendChild(messageContent);
+    return systemMessage;
+  }
+
   const messageElement = document.createElement('div');
   messageElement.className = `flex ${message.isMe ? 'justify-end' : 'justify-start'} mb-1 px-4`;
   
@@ -324,7 +336,7 @@ function parseEmojis(text) {
     return '';
   }
 
-  // Simple emoji parsing - in a real app you'd use a proper emoji library
+  // Simple emoji parsing
   return text.replace(/:\)/g, '😊')
             .replace(/:\(/g, '😢')
             .replace(/:D/g, '😃')
@@ -332,27 +344,15 @@ function parseEmojis(text) {
             .replace(/<3/g, '❤️');
 }
 
+// Add a new message to the chat
 function addMessageToChat(message) {
-  // Vérifier si le message est valide
-  if (!message) {
-    console.error('Message invalide:', message);
-    return;
-  }
-
   const messagesList = document.getElementById('messages-list');
-  if (!messagesList) {
-    console.error('Container de messages non trouvé');
-    return;
-  }
-
   const messageElement = createMessageElement(message);
   messagesList.appendChild(messageElement);
   
   // Scroll to bottom
   const messagesContainer = document.getElementById('messages-container');
-  if (messagesContainer) {
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  }
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Initialize the message input and voice recording with WhatsApp-style recording

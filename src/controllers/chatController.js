@@ -36,47 +36,47 @@ function initNewChatButton() {
 
 async function handleNewChat(contact) {
   try {
-    console.log('handleNewChat appelé avec:', contact);
-    
     if (!contact || !contact.id) {
-      console.error('Contact invalide:', contact);
-      return;
+      throw new Error('Contact invalide');
     }
 
     // Créer ou récupérer le chat
     const chat = await createNewChat(contact);
     if (!chat) {
-      console.error('Erreur lors de la création du chat');
-      return;
+      throw new Error('Erreur lors de la création du chat');
     }
 
-    console.log('Chat créé/récupéré:', chat);
-
-    // Masquer la vue des nouvelles discussions
-    hideNewDiscussionView();
-
-    // Définir le chat actif AVANT de mettre à jour l'interface
+    // Définir le chat actif
     activeChat = chat;
     window.activeChat = chat;
 
-    // Afficher les éléments de chat
+    // Mettre à jour l'interface
     showChatInterface();
-
-    // Mettre à jour l'interface avec les données du chat
     renderChatHeader(chat);
-    
-    // Récupérer et afficher les messages
-    const messages = getMessagesByChatId(chat.id) || [];
-    renderMessages(messages);
+    renderMessages([]); // Commencer avec une liste vide de messages
 
     // Mettre à jour la liste des chats
     const allChats = getAllChats();
     renderChatList(allChats, handleChatClick);
 
-    console.log('Chat activé avec succès:', chat.name);
+    // Créer un message de bienvenue
+    if (!chat.lastMessage) {
+      const welcomeMessage = {
+        id: Date.now().toString(),
+        chatId: chat.id,
+        text: `Début de la conversation avec ${contact.name}`,
+        timestamp: new Date().toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        isSystem: true
+      };
+      addMessageToChat(welcomeMessage);
+    }
 
   } catch (error) {
     console.error('Erreur handleNewChat:', error);
+    showNotification('Erreur lors de la création de la discussion', 'error');
   }
 }
 
@@ -243,5 +243,50 @@ const message = {
   isMe: false, // Pour les messages que vous recevez
   timestamp: "..."
 };
+
+async function handleContactSelect(contact) {
+  try {
+    // Créer ou récupérer le chat existant
+    const chat = await createNewChat(contact);
+    
+    if (!chat) {
+      throw new Error('Erreur lors de la création du chat');
+    }
+
+    // Définir le chat actif
+    activeChat = chat;
+    window.activeChat = chat;
+
+    // Masquer l'écran de bienvenue s'il est visible
+    const welcomeScreen = document.getElementById('welcome-screen');
+    if (welcomeScreen) {
+      welcomeScreen.style.display = 'none';
+    }
+
+    // Afficher l'interface du chat
+    showChatInterface();
+
+    // Mettre à jour l'interface
+    renderChatHeader(chat);
+    
+    // Charger et afficher les messages
+    const messages = getMessagesByChatId(chat.id);
+    renderMessages(messages || []);
+
+    // Afficher le conteneur de saisie de message
+    const messageInput = document.getElementById('message-input-container');
+    if (messageInput) {
+      messageInput.style.display = 'flex';
+    }
+
+    // Mettre à jour la liste des chats
+    const allChats = getAllChats();
+    renderChatList(allChats, handleChatClick);
+
+  } catch (error) {
+    console.error('Erreur handleContactSelect:', error);
+    showNotification('Erreur lors de l\'ouverture de la discussion', 'error');
+  }
+}
 
 export { initChat };

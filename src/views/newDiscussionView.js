@@ -9,33 +9,62 @@ async function renderContacts(contacts, onContactSelect) {
 
   const contactsArray = Array.isArray(contacts) ? contacts : [];
 
-  contactsList.innerHTML = contactsArray.map(contact => {
-    const avatarData = contact.avatar ? 
-      { dataUrl: contact.avatar, initials: '', backgroundColor: '' } : 
-      generateInitialsAvatar(contact.name);
-    
-    return `
-      <div class="contact-item flex items-center p-3 hover:bg-[#202c33] cursor-pointer" data-contact-id="${contact.id}">
-        <div class="w-12 h-12 rounded-full mr-4 overflow-hidden">
-          <img src="${avatarData.dataUrl}" alt="${contact.name}" class="w-full h-full object-cover">
-        </div>
-        <div>
-          <h3 class="text-white contact-name">${contact.name}</h3>
-          <p class="text-gray-400 text-sm">${contact.status || (contact.online ? 'En ligne' : 'Hors ligne')}</p>
-        </div>
+  contactsList.innerHTML = contactsArray.map(contact => `
+    <div class="contact-item cursor-pointer hover:bg-[#202c33] p-3 flex items-center transition-colors" data-contact-id="${contact.id}">
+      <div class="w-12 h-12 rounded-full overflow-hidden mr-4">
+        <img 
+          src="${contact.avatar}" 
+          alt="${contact.name}" 
+          class="w-full h-full object-cover"
+          onerror="this.src='https://via.placeholder.com/160?text=${contact.name[0]}'"
+        >
       </div>
-    `;
-  }).join('');
+      <div class="flex-1">
+        <h3 class="text-white">${contact.name}</h3>
+        <p class="text-gray-400 text-sm">${contact.status || "Hey! J'utilise WhatsApp"}</p>
+      </div>
+    </div>
+  `).join('');
 
-  // Add click events
+  // Add click events for contacts with visual feedback
   const contactItems = contactsList.querySelectorAll('.contact-item');
   contactItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const contactId = parseInt(item.dataset.contactId);
-      const selectedContact = contacts.find(c => c.id === contactId);
-      if (selectedContact && onContactSelect) {
-        onContactSelect(selectedContact);
-        hideNewDiscussionView();
+    item.addEventListener('click', async () => {
+      try {
+        // Visual feedback
+        item.classList.add('bg-[#2a3942]');
+        
+        const contactId = item.dataset.contactId;
+        const selectedContact = contacts.find(c => String(c.id) === String(contactId));
+        
+        if (selectedContact && typeof onContactSelect === 'function') {
+          // Masquer la vue des nouvelles discussions
+          hideNewDiscussionView();
+          
+          // Créer ou activer la discussion
+          await onContactSelect(selectedContact);
+          
+          // Attendre un peu pour l'effet visuel
+          await new Promise(resolve => setTimeout(resolve, 150));
+        }
+      } catch (error) {
+        console.error('Erreur lors de la sélection du contact:', error);
+        showNotification('Erreur lors de l\'ouverture de la discussion', 'error');
+      } finally {
+        item.classList.remove('bg-[#2a3942]');
+      }
+    });
+
+    // Ajout d'effet hover
+    item.addEventListener('mouseenter', () => {
+      if (!item.classList.contains('bg-[#2a3942]')) {
+        item.classList.add('bg-[#202c33]');
+      }
+    });
+
+    item.addEventListener('mouseleave', () => {
+      if (!item.classList.contains('bg-[#2a3942]')) {
+        item.classList.remove('bg-[#202c33]');
       }
     });
   });
@@ -204,7 +233,7 @@ export async function renderNewDiscussionView(onContactSelect) {
   initNewDiscussionEvents(onContactSelect);
   
   // Load and render contacts and groups
-  await loadAndRenderData(onContactSelect);
+  await loadAndRenderData((contact) => handleContactSelect(contact));
 }
 
 async function loadAndRenderData(onContactSelect) {
