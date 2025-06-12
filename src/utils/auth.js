@@ -111,7 +111,6 @@ const API_URL = 'https://serveur2.onrender.com';
 
 export async function login(phoneNumber, countryCode = 'SN') {
   try {
-    // Récupérer les contacts depuis l'API
     const response = await fetch(`${API_URL}/contacts`);
     if (!response.ok) {
       throw new Error('Erreur de connexion au serveur');
