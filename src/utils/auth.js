@@ -84,9 +84,9 @@ export function formatPhoneNumber(phone, countryCode) {
 /**
  * Fonction d'inscription
  * @param {string} phoneNumber - Numéro de téléphone de l'utilisateur
- * @param {string} firstName - Prénom de l'utilisateur
- * @param {string} lastName - Nom de l'utilisateur
- * @param {string} countryCode - Code du pays
+ * @param {string} firstName - Prénom de
+ * @param {string} lastName 
+ * @param {string} countryCode 
  */
 export function register(phoneNumber, firstName, lastName, countryCode = 'SN') {
     const user = {
