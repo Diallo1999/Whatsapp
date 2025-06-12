@@ -61,6 +61,18 @@ document.addEventListener('DOMContentLoaded', () => {
         phoneInput.classList.remove('border-red-500');
     }
 
+    // Fonction pour afficher l'overlay
+    function showLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'flex';
+    }
+
+    // Fonction pour masquer l'overlay
+    function hideLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'none';
+    }
+
     // Country change handler
     countrySelect.addEventListener('change', (e) => {
         const selectedCountry = countries.find(c => c.code === e.target.value);
@@ -97,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            loadingOverlay.classList.remove('hidden');
+            showLoadingOverlay();
             submitBtn.disabled = true;
             
             // Formater le numéro correctement
@@ -112,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showError(error.message || 'Une erreur est survenue lors de la connexion');
         } finally {
-            loadingOverlay.classList.add('hidden');
+            hideLoadingOverlay();
             submitBtn.disabled = false;
         }
     });

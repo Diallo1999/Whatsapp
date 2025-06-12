@@ -109,10 +109,28 @@ function handleChatClick(chat) {
     return;
   }
 
-  console.log('Chat cliqué:', chat);
+  // Masquer l'écran de bienvenue
+  const welcomeScreen = document.getElementById('welcome-screen');
+  if (welcomeScreen) {
+    welcomeScreen.style.display = 'none';
+  }
 
   // Afficher les éléments de chat
-  showChatInterface();
+  const messagesContainer = document.getElementById('messages-container');
+  const chatHeader = document.getElementById('chat-header');
+  const messageInput = document.getElementById('message-input-container');
+
+  if (messagesContainer) {
+    messagesContainer.classList.remove('hidden');
+  }
+  
+  if (chatHeader) {
+    chatHeader.classList.remove('hidden');
+  }
+  
+  if (messageInput) {
+    messageInput.classList.remove('hidden');
+  }
 
   // Gérer les messages non lus
   if (chat.unreadCount > 0) {

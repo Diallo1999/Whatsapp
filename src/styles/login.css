@@ -256,3 +256,15 @@ select:focus, input:focus {
 .main-content {
     animation: fadeIn 0.3s ease-in-out;
 }
+
+#loadingOverlay {
+    transition: opacity 0.3s ease-in-out;
+}
+
+#loadingOverlay[style*="display: flex"] {
+    opacity: 1;
+}
+
+#loadingOverlay[style*="display: none"] {
+    opacity: 0;
+}

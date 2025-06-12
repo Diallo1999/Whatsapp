@@ -1,7 +1,7 @@
 import { generateRandomAvatar } from '../utils/helpers.js';
 import { generateInitialsAvatar } from '../utils/avatarGenerator.js';
 
-const API_URL = 'https://server-vo8j.onrender.com';
+const API_URL = 'http://localhost:3000';
 
 // Initialiser les tableaux vides
 let chats = [];
@@ -194,7 +194,7 @@ async function addNewContact(contact) {
       phone: cleanPhone,
       status: contact.status || "Hey! J'utilise WhatsApp",
       online: false,
-      avatar: contact.avatar || generateInitialsAvatar(contact.name).dataUrl
+      avatar: contact.avatar || generateInitialsAvatar(contact.name)
     };
     
     const response = await fetch(`${API_URL}/contacts`, {
@@ -231,41 +231,30 @@ async function searchContacts(query) {
   }
 }
 
-// Fonction createNewChat corrigée
+// Ajouter la fonction createNewChat
 async function createNewChat(contact) {
   try {
-    if (!contact || !contact.id) {
-      console.error('Contact invalide:', contact);
-      return null;
-    }
-
     loadChats();
     
-    // Vérifier si le chat existe déjà en utilisant l'ID du contact
+    // Vérifier si le chat existe déjà
     const existingChat = chats.find(c => String(c.id) === String(contact.id));
     if (existingChat) {
-      console.log('Chat existant trouvé:', existingChat);
       return existingChat;
     }
 
-    // Créer un nouveau chat avec les données du contact
+    // Créer un nouveau chat
     const newChat = {
-      id: contact.id, // Utiliser l'ID du contact
+      id: contact.id,
       name: contact.name,
       lastMessage: '',
-      timestamp: new Date().toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      }),
+      timestamp: new Date().toLocaleTimeString('fr-FR'),
       unreadCount: 0,
-      avatar: contact.avatar || generateInitialsAvatar(contact.name).dataUrl,
-      online: contact.online || false,
+      avatar: contact.avatar || `https://api.dicebear.com/6.x/initials/svg?seed=${contact.name}`,
+      online: false,
       status: contact.status || "Hey! J'utilise WhatsApp",
-      phone: contact.phone,
-      messages: []
+      messages: [],
+      isGroup: contact.isGroup || false
     };
-
-    console.log('Création du nouveau chat:', newChat);
 
     // Sauvegarder en local d'abord
     chats.push(newChat);
@@ -273,7 +262,7 @@ async function createNewChat(contact) {
 
     try {
       // Sauvegarder dans l'API
-      const response = await fetch(`${API_URL}/chats`, {
+      const response = await fetch('http://localhost:3000/chats', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -289,17 +278,70 @@ async function createNewChat(contact) {
           chats[index] = savedChat;
           saveChats();
         }
-        console.log('Chat sauvegardé dans l\'API:', savedChat);
         return savedChat;
       }
     } catch (apiError) {
       console.warn('API error, using local data:', apiError);
     }
 
-    console.log('Chat créé localement:', newChat);
     return newChat;
   } catch (error) {
     console.error('Error in createNewChat:', error);
+    return null;
+  }
+}
+
+// Nouvelle fonction pour créer un groupe
+async function createNewGroup(groupData) {
+  try {
+    loadChats();
+    
+    // Créer le groupe avec un ID unique
+    const newGroup = {
+      ...groupData,
+      id: Date.now(),
+      isGroup: true,
+      messages: [],
+      lastMessage: `Groupe créé`,
+      timestamp: new Date().toLocaleTimeString('fr-FR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }),
+      unreadCount: 0,
+      online: false
+    };
+
+    // Sauvegarder en local d'abord
+    chats.push(newGroup);
+    saveChats();
+
+    try {
+      // Sauvegarder dans l'API
+      const response = await fetch('http://localhost:3000/chats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newGroup)
+      });
+
+      if (response.ok) {
+        const savedGroup = await response.json();
+        // Mettre à jour le groupe local avec les données de l'API
+        const index = chats.findIndex(c => String(c.id) === String(newGroup.id));
+        if (index !== -1) {
+          chats[index] = savedGroup;
+          saveChats();
+        }
+        return savedGroup;
+      }
+    } catch (apiError) {
+      console.warn('API error, using local data:', apiError);
+    }
+
+    return newGroup;
+  } catch (error) {
+    console.error('Error in createNewGroup:', error);
     return null;
   }
 }
@@ -385,5 +427,6 @@ export {
   searchContacts,
   createNewChat,
   addNewContact,
-  updateLastMessage
+  updateLastMessage,
+  createNewGroup
 };

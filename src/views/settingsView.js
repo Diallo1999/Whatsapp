@@ -2,6 +2,17 @@ import { getCurrentUser } from '../models/userModel.js';
 import { logout } from '../utils/auth.js';
 
 function renderSettingsView() {
+  // Masquer les éléments de chat existants
+  const welcomeScreen = document.getElementById('welcome-screen');
+  const messagesContainer = document.getElementById('messages-container');
+  const chatHeader = document.getElementById('chat-header');
+  const messageInput = document.getElementById('message-input-container');
+
+  if (welcomeScreen) welcomeScreen.style.display = 'none';
+  if (messagesContainer) messagesContainer.style.display = 'none'; 
+  if (chatHeader) chatHeader.style.display = 'none';
+  if (messageInput) messageInput.style.display = 'none';
+
   // Vérifier si un conteneur de paramètres existe déjà
   const existingSettings = document.getElementById('settings-container');
   if (existingSettings) {
@@ -179,13 +190,21 @@ function initSettingsEvents() {
 }
 
 function hideSettingsView() {
-  const container = document.getElementById('settings-container');
-  if (container) {
-    container.remove();
-  }
+  const settingsContainer = document.getElementById('settings-container');
   const chatList = document.getElementById('chat-list-container');
+  const welcomeScreen = document.getElementById('welcome-screen');
+  
+  if (settingsContainer) {
+    settingsContainer.remove();
+  }
+  
   if (chatList) {
     chatList.style.display = 'flex';
+  }
+
+  // Réafficher l'écran de bienvenue
+  if (welcomeScreen) {
+    welcomeScreen.style.display = 'flex';
   }
 }
 
