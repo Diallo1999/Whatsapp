@@ -2,6 +2,7 @@ import './index.css';
 import { renderIcons } from './utils/helpers.js';
 import { initApp } from './controllers/appController.js';
 import { isAuthenticated, requireAuth } from './utils/auth.js';
+import { generateInitialsAvatarUrl } from './utils/avatarGenerator.js';
 
 // Fonction pour initialiser les gestionnaires d'événements
 function initializeEventListeners() {
@@ -58,3 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize the application only if authenticated
   initApp();
 });
+
+// Expose the function to the window object
+window.generateInitialsAvatarUrl = generateInitialsAvatarUrl;

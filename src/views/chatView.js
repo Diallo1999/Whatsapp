@@ -1,4 +1,4 @@
-// Fichier chatView.js amélioré avec le style WhatsApp
+// Fichier chatView.js refait pour ressembler exactement à WhatsApp
 import { EmojiPicker } from '../components/EmojiPicker.js';
 import { renderChatOptionsModal } from './chatOptionsModalView.js';
 import { MenuIcon, SearchIcon } from '../utils/icons.js';
@@ -27,7 +27,7 @@ function renderChatHeader(chat) {
   
   chatHeader.classList.remove('hidden');
   activeChatName.textContent = chat.name;
-  activeChatStatus.textContent = chat.online ? 'En ligne' : 'Dernière fois hier';
+  activeChatStatus.textContent = chat.online ? 'En ligne' : 'Vu pour la dernière fois récemment';
   activeChatAvatar.src = chat.avatar;
 
   if (headerRight) {
@@ -64,22 +64,21 @@ function renderMessages(messages) {
   messagesContainer.classList.remove('hidden');
   messagesList.innerHTML = '';
   
-  // Group messages by date
+  // Style du conteneur de messages pour ressembler à WhatsApp
+  messagesContainer.className = 'flex-1 overflow-y-auto bg-[#0b141a] relative';
+  messagesContainer.style.backgroundImage = `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='whatsapp-bg' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 0h100v100H0z' fill='%23111b21'/%3E%3Cpath d='M20 20h60v60H20z' fill='none' stroke='%23182229' stroke-width='0.5' opacity='0.1'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23whatsapp-bg)'/%3E%3C/svg%3E")`;
+  
+  messagesList.className = 'px-4 py-2 space-y-1';
+  
+  // Grouper les messages par date
   const messagesByDate = groupMessagesByDate(messages);
   
   Object.keys(messagesByDate).forEach(date => {
-    // Add date separator
-    const dateSeparator = document.createElement('div');
-    dateSeparator.className = 'flex justify-center my-4';
-    
-    const dateElement = document.createElement('div');
-    dateElement.className = 'bg-[#182229] text-[#8696a0] text-xs px-3 py-1 rounded-md shadow-sm';
-    dateElement.textContent = formatDateSeparator(date);
-    
-    dateSeparator.appendChild(dateElement);
+    // Ajouter le séparateur de date
+    const dateSeparator = createDateSeparator(date);
     messagesList.appendChild(dateSeparator);
     
-    // Add messages for this date
+    // Ajouter les messages de cette date
     messagesByDate[date].forEach(message => {
       const messageElement = createMessageElement(message);
       messagesList.appendChild(messageElement);
@@ -87,7 +86,9 @@ function renderMessages(messages) {
   });
   
   // Scroll to bottom
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  setTimeout(() => {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }, 100);
   
   // Show message input
   document.getElementById('message-input-container').classList.remove('hidden');
@@ -96,131 +97,142 @@ function renderMessages(messages) {
   document.getElementById('welcome-screen').classList.add('hidden');
 }
 
+// Grouper les messages par date
 function groupMessagesByDate(messages) {
   const groups = {};
+  
   messages.forEach(message => {
-    const date = new Date(message.timestamp || Date.now()).toDateString();
+    const date = getDateKey(message.timestamp);
     if (!groups[date]) {
       groups[date] = [];
     }
     groups[date].push(message);
   });
+  
   return groups;
 }
 
-function formatDateSeparator(dateString) {
-  const date = new Date(dateString);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+// Obtenir la clé de date pour le groupement
+function getDateKey(timestamp) {
+  const now = new Date();
+  const messageDate = new Date();
   
-  if (date.toDateString() === today.toDateString()) {
-    return "AUJOURD'HUI";
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return "HIER";
+  // Si timestamp est une heure (HH:MM), on utilise aujourd'hui
+  if (typeof timestamp === 'string' && timestamp.match(/^\d{1,2}:\d{2}$/)) {
+    return 'AUJOURD\'HUI';
+  }
+  
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  
+  if (messageDate >= today) {
+    return 'AUJOURD\'HUI';
+  } else if (messageDate >= yesterday) {
+    return 'HIER';
   } else {
-    return date.toLocaleDateString('fr-FR', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }).toUpperCase();
+    return messageDate.toLocaleDateString('fr-FR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
   }
 }
 
-// Create a single message element with WhatsApp styling
-function createMessageElement(message) {
-  if (message.isSystem) {
-    const systemMessage = document.createElement('div');
-    systemMessage.className = 'flex justify-center my-4';
-    
-    const messageContent = document.createElement('div');
-    messageContent.className = 'bg-[#182229] text-[#8696a0] text-xs px-3 py-1 rounded-md shadow-sm';
-    messageContent.textContent = message.text;
-    
-    systemMessage.appendChild(messageContent);
-    return systemMessage;
-  }
+// Créer le séparateur de date
+function createDateSeparator(dateText) {
+  const separator = document.createElement('div');
+  separator.className = 'flex justify-center my-4';
+  
+  const dateLabel = document.createElement('div');
+  dateLabel.className = 'bg-[#182229] text-[#8696a0] text-xs px-3 py-1 rounded-md font-medium';
+  dateLabel.textContent = dateText;
+  
+  separator.appendChild(dateLabel);
+  return separator;
+}
 
-  const messageElement = document.createElement('div');
-  messageElement.className = `flex ${message.isMe ? 'justify-end' : 'justify-start'} mb-1 px-4`;
+// Create a single message element (style WhatsApp)
+function createMessageElement(message) {
+  const messageContainer = document.createElement('div');
+  messageContainer.className = `flex ${message.isMe ? 'justify-end' : 'justify-start'} mb-1`;
   
   const messageBubble = document.createElement('div');
-  messageBubble.className = `max-w-xs md:max-w-md rounded-lg px-3 py-2 relative ${
+  messageBubble.className = `relative max-w-[65%] rounded-lg px-3 py-2 ${
     message.isMe 
-      ? 'bg-[#005c4b] text-white ml-12' 
-      : 'bg-[#202c33] text-white mr-12'
-  }`;
-  
-  // Add message tail
-  const tail = document.createElement('div');
-  tail.className = `absolute ${
-    message.isMe 
-      ? 'right-0 top-0 w-0 h-0 border-l-[8px] border-l-[#005c4b] border-t-[8px] border-t-transparent transform translate-x-full'
-      : 'left-0 top-0 w-0 h-0 border-r-[8px] border-r-[#202c33] border-t-[8px] border-t-transparent transform -translate-x-full'
-  }`;
-  messageBubble.appendChild(tail);
-  
-  if (message.isImage) {
-    const imageContainer = document.createElement('div');
-    imageContainer.className = 'w-64 h-48 bg-gray-700 rounded overflow-hidden flex items-center justify-center mb-2';
-    
-    if (message.imageData) {
-      const img = document.createElement('img');
-      img.src = message.imageData;
-      img.className = 'w-full h-full object-cover';
-      imageContainer.appendChild(img);
-    } else {
-      const imageIcon = document.createElement('span');
-      imageIcon.className = 'text-gray-400';
-      imageIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
-      imageContainer.appendChild(imageIcon);
-    }
-    
-    messageBubble.appendChild(imageContainer);
-  } else if (message.isVoice) {
-    const voiceContainer = createVoiceMessageElement(message);
-    messageBubble.appendChild(voiceContainer);
-  } else if (message.isFile) {
-    const fileContainer = createFileMessageElement(message);
-    messageBubble.appendChild(fileContainer);
+      ? 'bg-[#005c4b] text-white rounded-br-sm' 
+      : 'bg-[#202c33] text-white rounded-bl-sm'
+  } shadow-sm`;
+
+  // Vérifier si c'est un message audio
+  if (message.isVoice) {
+    const voiceMessage = createVoiceMessageElement(message);
+    messageBubble.appendChild(voiceMessage);
   } else {
-    const messageText = document.createElement('p');
-    messageText.className = 'text-white break-words leading-relaxed';
-    messageText.innerHTML = parseEmojis(message.text);
-    messageBubble.appendChild(messageText);
+    // Message texte normal
+    const messageContent = document.createElement('div');
+    messageContent.innerHTML = parseEmojis(message.text || '');
+    messageBubble.appendChild(messageContent);
   }
   
-  // Message info (time and status)
-  const messageInfo = document.createElement('div');
-  messageInfo.className = 'flex items-center justify-end gap-1 mt-1';
+  // Footer avec timestamp et statut
+  const messageFooter = document.createElement('div');
+  messageFooter.className = 'flex items-center justify-end gap-1 mt-1';
   
-  const timeStamp = document.createElement('span');
-  timeStamp.className = 'text-xs text-gray-400';
-  timeStamp.textContent = formatMessageTime(message.timestamp);
+  const timestamp = document.createElement('span');
+  timestamp.className = 'text-[11px] text-[#8696a0] font-normal';
+  timestamp.textContent = message.timestamp;
   
-  messageInfo.appendChild(timeStamp);
+  messageFooter.appendChild(timestamp);
   
+  // Ajouter les indicateurs de statut pour les messages envoyés
   if (message.isMe) {
     const statusIcon = document.createElement('span');
-    statusIcon.className = 'text-xs text-blue-400';
-    statusIcon.innerHTML = '✓✓'; // Double check mark for sent messages
-    messageInfo.appendChild(statusIcon);
+    statusIcon.className = 'text-[12px] ml-1 status-icon';
+    
+    if (message.read) {
+      statusIcon.innerHTML = '✓✓';
+      statusIcon.className += ' text-[#53bdeb]';
+    } else if (message.delivered) {
+      statusIcon.innerHTML = '✓✓';
+      statusIcon.className += ' text-[#8696a0]';
+    } else if (message.sent) {
+      statusIcon.innerHTML = '✓';
+      statusIcon.className += ' text-[#8696a0]';
+    }
+    
+    messageFooter.appendChild(statusIcon);
   }
   
-  messageBubble.appendChild(messageInfo);
-  messageElement.appendChild(messageBubble);
+  messageBubble.appendChild(messageFooter);
+  messageContainer.appendChild(messageBubble);
   
-  return messageElement;
+  return messageContainer;
 }
 
-function formatMessageTime(timestamp) {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('fr-FR', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+function createImageMessage(message) {
+  const imageContainer = document.createElement('div');
+  imageContainer.className = 'rounded-lg overflow-hidden max-w-[300px] mb-2';
+  
+  if (message.imageData) {
+    const img = document.createElement('img');
+    img.src = message.imageData;
+    img.className = 'w-full h-auto max-h-[400px] object-cover';
+    img.loading = 'lazy';
+    imageContainer.appendChild(img);
+  } else {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'w-full h-48 bg-[#2a3942] flex items-center justify-center';
+    placeholder.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+        <circle cx="9" cy="9" r="2"/>
+        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+      </svg>
+    `;
+    imageContainer.appendChild(placeholder);
+  }
+  
+  return imageContainer;
 }
 
 function createVoiceMessageElement(message) {
@@ -229,70 +241,50 @@ function createVoiceMessageElement(message) {
   
   const playButton = document.createElement('button');
   playButton.className = 'text-white hover:text-gray-300 flex-shrink-0 w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center';
-  playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+  playButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>
+  `;
   
   const waveform = document.createElement('div');
-  waveform.className = 'h-6 flex-1 flex items-center justify-center px-2';
-  waveform.innerHTML = '<div class="flex gap-1 items-center">' + 
-    Array.from({length: 20}, () => '<div class="w-1 bg-gray-400 rounded" style="height: ' + (Math.random() * 16 + 4) + 'px"></div>').join('') +
-    '</div>';
+  waveform.className = 'flex-1 flex items-center gap-1 h-8';
+  
+  // Créer une forme d'onde simple
+  for (let i = 0; i < 30; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'flex-1 bg-white bg-opacity-20 rounded-full';
+    bar.style.height = `${Math.random() * 100}%`;
+    waveform.appendChild(bar);
+  }
   
   const duration = document.createElement('span');
-  duration.className = 'text-xs text-gray-400 flex-shrink-0';
+  duration.className = 'text-sm text-white text-opacity-80 flex-shrink-0 font-mono';
   duration.textContent = message.duration || '0:00';
 
-  // Audio functionality
-  if (message.audioUrl || message.audioBlob) {
-    const audioElement = document.createElement('audio');
-    if (message.audioBlob instanceof Blob) {
-      const audioUrl = URL.createObjectURL(message.audioBlob);
-      audioElement.src = audioUrl;
-    } else if (message.audioUrl) {
-      audioElement.src = message.audioUrl;
-    }
-    audioElement.preload = 'metadata';
-
-    let isPlaying = false;
-
+  // Fonctionnalité audio
+  if (message.audioBlob) {
+    const audioUrl = URL.createObjectURL(message.audioBlob);
+    const audio = new Audio(audioUrl);
+    
     playButton.addEventListener('click', () => {
-      // Stop all other audio elements
-      const allAudioElements = document.querySelectorAll('audio');
-      allAudioElements.forEach(audio => {
-        if (audio !== audioElement && !audio.paused) {
-          audio.pause();
-          audio.currentTime = 0;
-        }
-      });
-
-      // Reset all other play buttons
-      const allPlayButtons = document.querySelectorAll('.voice-play-btn');
-      allPlayButtons.forEach(btn => {
-        if (btn !== playButton) {
-          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
-        }
-      });
-
-      if (isPlaying) {
-        audioElement.pause();
-        audioElement.currentTime = 0;
-        playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
-        isPlaying = false;
+      if (audio.paused) {
+        audio.play();
+        playButton.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        `;
       } else {
-        audioElement.play().then(() => {
-          playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
-          isPlaying = true;
-        }).catch(error => {
-          console.error('Erreur lors de la lecture audio:', error);
-        });
+        audio.pause();
+        playButton.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        `;
       }
     });
-
-    audioElement.addEventListener('ended', () => {
-      isPlaying = false;
-      playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
-    });
-
-    playButton.classList.add('voice-play-btn');
   }
 
   voiceContainer.appendChild(playButton);
@@ -304,11 +296,16 @@ function createVoiceMessageElement(message) {
 
 function createFileMessageElement(message) {
   const fileContainer = document.createElement('div');
-  fileContainer.className = 'flex items-center gap-3 p-2 bg-[#2a3942] rounded-lg min-w-[200px]';
+  fileContainer.className = 'flex items-center gap-3 p-3 bg-black bg-opacity-20 rounded-lg min-w-[250px] mb-2';
   
   const fileIcon = document.createElement('div');
-  fileIcon.className = 'w-10 h-10 bg-[#00a884] rounded-full flex items-center justify-center flex-shrink-0';
-  fileIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+  fileIcon.className = 'w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0';
+  fileIcon.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+    </svg>
+  `;
   
   const fileInfo = document.createElement('div');
   fileInfo.className = 'flex-1 min-w-0';
@@ -318,7 +315,7 @@ function createFileMessageElement(message) {
   fileName.textContent = message.fileName || 'Document';
   
   const fileSize = document.createElement('div');
-  fileSize.className = 'text-gray-400 text-xs';
+  fileSize.className = 'text-white text-opacity-70 text-xs';
   fileSize.textContent = formatFileSize(message.fileSize || 0);
   
   fileInfo.appendChild(fileName);
@@ -331,36 +328,60 @@ function createFileMessageElement(message) {
 }
 
 function parseEmojis(text) {
-  // Vérifier si le texte est défini
-  if (!text || typeof text !== 'string') {
-    return '';
-  }
-
-  // Simple emoji parsing
-  return text.replace(/:\)/g, '😊')
-            .replace(/:\(/g, '😢')
-            .replace(/:D/g, '😃')
-            .replace(/;\)/g, '😉')
-            .replace(/<3/g, '❤️');
+  // Add null check
+  if (!text) return '';
+  
+  // Replace emoji shortcodes with actual emojis
+  return text.replace(/:([\w-]+):/g, (match, code) => {
+    const emoji = emojiMap[code];
+    return emoji || match;
+  });
 }
 
 // Add a new message to the chat
 function addMessageToChat(message) {
   const messagesList = document.getElementById('messages-list');
+  
+  // Vérifier si on doit ajouter un nouveau séparateur de date
+  const lastSeparator = messagesList.querySelector('.flex.justify-center:last-of-type');
+  const messageDate = getDateKey(message.timestamp);
+  
+  if (!lastSeparator || !lastSeparator.textContent.includes(messageDate)) {
+    const dateSeparator = createDateSeparator(messageDate);
+    messagesList.appendChild(dateSeparator);
+  }
+  
   const messageElement = createMessageElement(message);
   messagesList.appendChild(messageElement);
   
-  // Scroll to bottom
+  // Animation d'apparition
+  messageElement.style.opacity = '0';
+  messageElement.style.transform = 'translateY(10px)';
+  
+  requestAnimationFrame(() => {
+    messageElement.style.transition = 'all 0.2s ease-out';
+    messageElement.style.opacity = '1';
+    messageElement.style.transform = 'translateY(0)';
+  });
+  
+  // Scroll to bottom avec animation fluide
   const messagesContainer = document.getElementById('messages-container');
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  messagesContainer.scrollTo({
+    top: messagesContainer.scrollHeight,
+    behavior: 'smooth'
+  });
 }
 
-// Initialize the message input and voice recording with WhatsApp-style recording
+// Initialize the message input and voice recording
 function initMessageInput(onSendMessage) {
   const messageInput = document.getElementById('message-input');
   const voiceBtn = document.getElementById('voice-btn');
   const emojiBtn = document.getElementById('emoji-btn');
   const messageInputContainer = document.getElementById('message-input-container');
+
+  // Style de l'input pour ressembler à WhatsApp
+  messageInput.className = 'w-full bg-[#2a3942] text-white rounded-lg px-4 py-3 outline-none placeholder-gray-400 text-[15px]';
+  messageInput.placeholder = 'Tapez un message';
 
   // Initialize emoji picker
   emojiPicker = initEmojiPicker();
@@ -382,40 +403,28 @@ function initMessageInput(onSendMessage) {
     });
   });
 
-  // WhatsApp-style voice recording with hold to record
-  let recordingStartTime = null;
-  let recordingInterval = null;
-  let isHolding = false;
-
   async function handleVoiceRecord() {
     try {
       if (!isRecording) {
         mediaRecorder = await startVoiceRecording();
         isRecording = true;
-        isHolding = true;
-        recordingStartTime = Date.now();
 
-        // Update UI for recording with WhatsApp style
+        // Update UI for recording
         messageInputContainer.innerHTML = `
-          <div class="flex items-center w-full bg-[#2a3942] rounded-lg px-4 py-3">
-            <div class="flex items-center flex-1">
+          <div class="flex items-center w-full bg-[#2a3942] rounded-lg px-4 py-2">
+            <div class="flex-1 flex items-center">
               <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-3"></div>
-              <span class="text-gray-400 text-sm" id="recording-timer">0:00</span>
-              <div class="flex-1 mx-4">
-                <div class="text-gray-400 text-sm text-center">
-                  Glissez vers la gauche pour annuler
-                </div>
-              </div>
+              <span class="text-gray-400" id="recording-timer">0:00</span>
             </div>
-            <div class="flex items-center gap-2">
-              <button id="cancel-record" class="text-red-500 hover:text-red-400 p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex items-center gap-4">
+              <button id="cancel-record" class="text-gray-400 hover:text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <button id="send-record" class="text-[#00a884] hover:text-[#06cf9c] p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <button id="send-record" class="text-gray-400 hover:text-green-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
               </button>
             </div>
@@ -432,15 +441,16 @@ function initMessageInput(onSendMessage) {
         });
 
         document.getElementById('send-record').addEventListener('click', () => {
-          finishRecording();
+          stopVoiceRecording();
+          setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.audioChunks && mediaRecorder.audioChunks.length > 0) {
+              const audioBlob = new Blob(mediaRecorder.audioChunks, { type: mediaRecorder.mimeType });
+              const duration = getDuration(mediaRecorder.recordingStartTime);
+              onSendMessage("Message vocal", true, duration, audioBlob);
+            }
+            resetRecording();
+          }, 100);
         });
-
-        // Auto-stop recording after 60 seconds (WhatsApp limit)
-        setTimeout(() => {
-          if (isRecording) {
-            finishRecording();
-          }
-        }, 60000);
 
       }
     } catch (error) {
@@ -450,24 +460,8 @@ function initMessageInput(onSendMessage) {
     }
   }
 
-  function finishRecording() {
-    if (mediaRecorder && isRecording) {
-      stopVoiceRecording();
-      
-      setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.audioChunks && mediaRecorder.audioChunks.length > 0) {
-          const audioBlob = new Blob(mediaRecorder.audioChunks, { type: mediaRecorder.mimeType });
-          const duration = getDuration(recordingStartTime);
-          onSendMessage("🎤 Message vocal", true, duration, audioBlob);
-        }
-        resetRecording();
-      }, 100);
-    }
-  }
-
   function resetRecording() {
     isRecording = false;
-    isHolding = false;
     stopRecordingTimer();
     mediaRecorder = null;
     
@@ -485,13 +479,18 @@ function initMessageInput(onSendMessage) {
 
     if (!messageInput || !voiceBtn || !emojiBtn) return;
 
+    // Style de l'input
+    messageInput.className = 'w-full bg-[#2a3942] text-white rounded-lg px-4 py-3 outline-none placeholder-gray-400 text-[15px]';
+
     function handleInput() {
       updateButton(messageInput.value);
     }
 
     function handleKeyPress(event) {
-      if (event.key === 'Enter' && messageInput.value.trim() !== '') {
-        onSendMessage(messageInput.value);
+      if (event.key === 'Enter' && !event.shiftKey && messageInput.value.trim() !== '') {
+        event.preventDefault();
+        const messageText = messageInput.value.trim();
+        onSendMessage(messageText);
         messageInput.value = '';
         updateButton('');
       }

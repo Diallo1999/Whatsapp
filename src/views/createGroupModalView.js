@@ -252,6 +252,10 @@ async function initCreateGroupModal() {
   }
 
   async function handleCreateGroup() {
+    const nameInput = document.getElementById('group-name');
+    const descInput = document.getElementById('group-description');
+    
+    // Valider les champs...
     const groupName = groupNameInput.value.trim();
     const groupDescription = groupDescInput.value.trim();
     const groupAvatar = avatarContainer.dataset.avatar || generateInitialsAvatar(groupName).dataUrl;
@@ -265,6 +269,14 @@ async function initCreateGroupModal() {
     createBtn.textContent = 'Création en cours...';
 
     try {
+      const groupData = {
+        name: nameInput.value.trim(),
+        description: descInput.value.trim(),
+        avatar: groupAvatar,
+        participants: selectedContacts,
+        isGroup: true,
+      };
+
       // Create the group
       const newGroup = {
         id: Date.now(),

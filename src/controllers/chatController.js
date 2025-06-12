@@ -1,5 +1,5 @@
-import { getAllChats, getChatById, searchChats, markAsRead, createNewChat } from '../models/chatModel.js';
-import { getMessagesByChatId, addMessage } from '../models/messageModel.js';
+import { getAllChats, getChatById, searchChats, markAsRead, createNewChat, createNewGroup } from '../models/chatModel.js';
+import { getMessagesByChatId, addMessage, markMessagesAsRead, markMessagesAsDelivered } from '../models/messageModel.js';
 import { renderChatList, updateChatInList } from '../views/chatListView.js';
 import { 
   renderChatHeader, 
@@ -27,80 +27,98 @@ function initNewChatButton() {
 
   newChatBtn.addEventListener('click', async () => {
     try {
-      await renderNewDiscussionView(handleContactSelect);
+      await renderNewDiscussionView(handleNewChat);
     } catch (error) {
       console.error('Error opening new discussion view:', error);
     }
   });
 }
 
-async function handleContactSelect(contact) {
+async function handleNewChat(contact) {
   try {
-    if (!contact || !contact.id) {
-      throw new Error('Contact invalide');
-    }
-
-    // Créer ou récupérer le chat existant
-    const chat = await createNewChat(contact);
+    console.log('handleNewChat appelé avec:', contact);
     
-    if (!chat) {
-      throw new Error('Erreur lors de la création du chat');
+    if (!contact || !contact.id) {
+      console.error('Contact invalide:', contact);
+      return;
     }
 
-    // Définir le chat actif
+    // Créer ou récupérer le chat
+    const chat = await createNewChat(contact);
+    if (!chat) {
+      console.error('Erreur lors de la création du chat');
+      return;
+    }
+
+    console.log('Chat créé/récupéré:', chat);
+
+    // Masquer la vue des nouvelles discussions
+    hideNewDiscussionView();
+
+    // Définir le chat actif AVANT de mettre à jour l'interface
     activeChat = chat;
     window.activeChat = chat;
 
-    // Masquer l'écran de bienvenue s'il est visible
-    const welcomeScreen = document.getElementById('welcome-screen');
-    if (welcomeScreen) {
-      welcomeScreen.style.display = 'none';
-    }
-
-    // Afficher l'interface du chat
+    // Afficher les éléments de chat
     showChatInterface();
 
-    // Mettre à jour l'interface
+    // Mettre à jour l'interface avec les données du chat
     renderChatHeader(chat);
     
-    // Charger et afficher les messages
-    const messages = getMessagesByChatId(chat.id);
-    renderMessages(messages || []);
+    // Récupérer et afficher les messages
+    const messages = getMessagesByChatId(chat.id) || [];
+    renderMessages(messages);
 
-    // Afficher le conteneur de saisie de message
-    const messageInput = document.getElementById('message-input-container');
-    if (messageInput) {
-      messageInput.style.display = 'flex';
-    }
+    // Marquer les messages comme lus
+    markMessagesAsRead(chat.id);
 
     // Mettre à jour la liste des chats
     const allChats = getAllChats();
     renderChatList(allChats, handleChatClick);
 
-    // Créer un message de bienvenue si c'est un nouveau chat
-    if (!chat.lastMessage) {
-      const welcomeMessage = {
-        id: Date.now().toString(),
-        chatId: chat.id,
-        text: `Début de la conversation avec ${contact.name}`,
-        timestamp: new Date().toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        isSystem: true
-      };
-      addMessageToChat(welcomeMessage);
-    }
+    console.log('Chat activé avec succès:', chat.name);
 
   } catch (error) {
-    console.error('Erreur handleContactSelect:', error);
-    showNotification('Erreur lors de l\'ouverture de la discussion', 'error');
+    console.error('Erreur handleNewChat:', error);
   }
 }
 
-// Fonction pour gérer les nouveaux chats (ancienne fonction handleNewChat renommée)
-async function handleNewChat(contact) {
-  return await handleContactSelect(contact);
+// Ajouter après handleNewChat
+async function handleCreateGroup(groupData) {
+  try {
+    // Créer le nouveau groupe
+    const newGroup = await createNewGroup({
+      ...groupData,
+      lastMessage: "Groupe créé",
+      timestamp: new Date().toLocaleTimeString('fr-FR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }),
+      unreadCount: 0,
+      messages: []
+    });
+
+    // Masquer la vue de création de groupe
+    hideCreateGroupModal();
+
+    // Définir le groupe comme chat actif
+    activeChat = newGroup;
+    window.activeChat = newGroup;
+
+    // Afficher l'interface de chat
+    showChatInterface();
+
+    // Mettre à jour l'en-tête du chat
+    renderChatHeader(newGroup);
+
+    // Mettre à jour la liste des chats pour inclure le nouveau groupe
+    const allChats = getAllChats();
+    renderChatList(allChats, handleChatClick);
+
+  } catch (error) {
+    console.error('Erreur lors de la création du groupe:', error);
+    showNotification('Erreur lors de la création du groupe', 'error');
+  }
 }
 
 function showChatInterface() {
@@ -110,7 +128,8 @@ function showChatInterface() {
   const messageInput = document.getElementById('message-input-container');
 
   if (welcomeScreen) {
-    welcomeScreen.classList.add('hidden');
+    // Utiliser display: none au lieu de hidden
+    welcomeScreen.style.display = 'none';
   }
   
   if (messagesContainer) {
@@ -132,32 +151,15 @@ function handleChatClick(chat) {
     return;
   }
 
-  // Masquer l'écran de bienvenue
-  const welcomeScreen = document.getElementById('welcome-screen');
-  if (welcomeScreen) {
-    welcomeScreen.style.display = 'none';
-  }
+  console.log('Chat cliqué:', chat);
 
   // Afficher les éléments de chat
-  const messagesContainer = document.getElementById('messages-container');
-  const chatHeader = document.getElementById('chat-header');
-  const messageInput = document.getElementById('message-input-container');
-
-  if (messagesContainer) {
-    messagesContainer.classList.remove('hidden');
-  }
-  
-  if (chatHeader) {
-    chatHeader.classList.remove('hidden');
-  }
-  
-  if (messageInput) {
-    messageInput.classList.remove('hidden');
-  }
+  showChatInterface();
 
   // Gérer les messages non lus
   if (chat.unreadCount > 0) {
     markAsRead(chat.id);
+    markMessagesAsRead(chat.id);
     updateChatInList(getChatById(chat.id));
   }
 
@@ -169,6 +171,11 @@ function handleChatClick(chat) {
   renderChatHeader(chat);
   const messages = getMessagesByChatId(chat.id);
   renderMessages(messages || []);
+
+  // Simuler la livraison des messages après un délai
+  setTimeout(() => {
+    markMessagesAsDelivered(chat.id);
+  }, 1000);
 }
 
 function initSearch() {
@@ -197,29 +204,86 @@ async function handleSendMessage(text, isVoice = false, duration = null, audioBl
       message = {
         id: Date.now().toString(),
         chatId: activeChat.id,
-        text: text,
+        isVoice: true,
+        duration: duration,
+        audioBlob: audioBlob, // Blob audio à sauvegarder
         timestamp: new Date().toLocaleTimeString('fr-FR', {
           hour: '2-digit',
           minute: '2-digit'
         }),
         isMe: true,
-        isVoice: true,
-        duration: duration,
-        audioBlob: audioBlob
+        sent: true,
+        delivered: false,
+        read: false
       };
+
+      // Sauvegarder le message
+      const messagesList = getMessagesByChatId(activeChat.id) || [];
+      messagesList.push(message);
       
-      // Ajouter le message directement à l'interface
+      // Mettre à jour l'interface
       addMessageToChat(message);
-      
-      // Mettre à jour le dernier message dans la liste des chats
+
+      // Simuler la livraison et la lecture
+      setTimeout(() => {
+        message.delivered = true;
+        const messageElements = document.querySelectorAll(`[data-message-id="${message.id}"]`);
+        messageElements.forEach(el => {
+          const statusIcon = el.querySelector('.status-icon');
+          if (statusIcon) {
+            statusIcon.innerHTML = '✓✓';
+            statusIcon.className = 'text-[#8696a0] text-[12px] ml-1 status-icon';
+          }
+        });
+        
+        setTimeout(() => {
+          message.read = true;
+          messageElements.forEach(el => {
+            const statusIcon = el.querySelector('.status-icon');
+            if (statusIcon) {
+              statusIcon.innerHTML = '✓✓';
+              statusIcon.className = 'text-[#53bdeb] text-[12px] ml-1 status-icon';
+            }
+          });
+        }, 2000);
+      }, 1000);
+
+      // Mettre à jour la liste des chats
       const chats = getAllChats();
       renderChatList(chats, handleChatClick);
       
     } else {
       // Message texte normal
-      message = await addMessage(activeChat.id, text);
+      message = await addMessage(activeChat.id, text, true);
       if (message) {
         addMessageToChat(message);
+        
+        // Simuler la livraison et la lecture
+        setTimeout(() => {
+          message.delivered = true;
+          // Re-render le message pour mettre à jour le statut
+          const messageElements = document.querySelectorAll(`[data-message-id="${message.id}"]`);
+          messageElements.forEach(el => {
+            const statusIcon = el.querySelector('.status-icon');
+            if (statusIcon) {
+              statusIcon.innerHTML = '✓✓';
+              statusIcon.className = 'text-[#8696a0] text-[12px] ml-1 status-icon';
+            }
+          });
+          
+          setTimeout(() => {
+            message.read = true;
+            // Re-render le message pour mettre à jour le statut (lu)
+            messageElements.forEach(el => {
+              const statusIcon = el.querySelector('.status-icon');
+              if (statusIcon) {
+                statusIcon.innerHTML = '✓✓';
+                statusIcon.className = 'text-[#53bdeb] text-[12px] ml-1 status-icon';
+              }
+            });
+          }, 2000);
+        }, 1000);
+        
         const chats = getAllChats();
         renderChatList(chats, handleChatClick);
         
@@ -243,7 +307,11 @@ function simulateReply(chatId) {
         "On peut en discuter plus tard?",
         "👍",
         "😊",
-        "Je vais y réfléchir."
+        "Je vais y réfléchir.",
+        "C'est une bonne idée !",
+        "Parfait, merci !",
+        "Je te tiens au courant.",
+        "À bientôt !"
       ];
       
       const randomReply = replies[Math.floor(Math.random() * replies.length)];
@@ -257,23 +325,10 @@ function simulateReply(chatId) {
         timestamp: replyMessage.timestamp
       });
     }
-  }, 2000);
+  }, Math.random() * 3000 + 2000); // Réponse entre 2 et 5 secondes
 }
 
-function showNotification(message, type = 'success') {
-  const notification = document.createElement('div');
-  notification.className = `fixed bottom-4 right-4 p-4 rounded-lg ${
-    type === 'success' ? 'bg-green-500' : 
-    type === 'error' ? 'bg-red-500' : 
-    'bg-blue-500'
-  } text-white shadow-lg z-50 notification`;
-  notification.textContent = message;
-  
-  document.body.appendChild(notification);
-  
-  setTimeout(() => {
-    notification.remove();
-  }, 3000);
-}
-
-export { initChat };
+export { 
+  initChat,
+  handleCreateGroup 
+};

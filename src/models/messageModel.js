@@ -1,9 +1,9 @@
 import { updateLastMessage, createNewChat, getAllChats, getChatById } from './chatModel.js';
 
-// Modifier l'URL de l'API
-const API_URL = 'https://serveur2.onrender.com';
+// Define API_URL constant
+const API_URL = 'http://localhost:3000';
 
-// Initialiser un objet vide pour les messages  
+// Initialiser un objet vide pour les messages
 let messages = {};
 
 // Charger les messages depuis le localStorage
@@ -22,33 +22,50 @@ function getMessagesByChatId(chatId) {
   return messages[chatId] || [];
 }
 
-async function addMessage(chatId, text) {
+async function addMessage(chatId, text, isMe = true) {
   try {
     const message = {
       id: Date.now().toString(),
-      chatId: chatId, 
+      chatId: chatId,
       text: text,
       timestamp: new Date().toLocaleTimeString('fr-FR', {
         hour: '2-digit',
         minute: '2-digit'
       }),
-      sent: true
+      isMe: isMe,
+      sent: true,
+      delivered: isMe ? true : false,
+      read: isMe ? false : true
     };
 
-    // Modifier l'URL de l'appel API
-    const response = await fetch(`${API_URL}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(message)
-    });
+    // Ajouter le message localement d'abord
+    loadMessages();
+    if (!messages[chatId]) {
+      messages[chatId] = [];
+    }
+    messages[chatId].push(message);
+    saveMessages();
 
-    if (!response.ok) {
-      throw new Error('Erreur lors de l\'ajout du message');
+    // Essayer d'ajouter à l'API
+    try {
+      const response = await fetch(`${API_URL}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(message)
+      });
+
+      if (!response.ok) {
+        console.warn('Erreur API, message sauvegardé localement seulement');
+      }
+    } catch (apiError) {
+      console.warn('API non disponible, message sauvegardé localement:', apiError);
     }
 
+    // Mettre à jour le dernier message du chat
     await updateLastMessage(chatId, text);
+    
     return message;
 
   } catch (error) {
@@ -57,7 +74,35 @@ async function addMessage(chatId, text) {
   }
 }
 
+// Marquer les messages comme lus
+function markMessagesAsRead(chatId) {
+  loadMessages();
+  if (messages[chatId]) {
+    messages[chatId].forEach(message => {
+      if (!message.isMe) {
+        message.read = true;
+      }
+    });
+    saveMessages();
+  }
+}
+
+// Marquer les messages comme livrés
+function markMessagesAsDelivered(chatId) {
+  loadMessages();
+  if (messages[chatId]) {
+    messages[chatId].forEach(message => {
+      if (message.isMe && !message.delivered) {
+        message.delivered = true;
+      }
+    });
+    saveMessages();
+  }
+}
+
 export {
   getMessagesByChatId,
-  addMessage
+  addMessage,
+  markMessagesAsRead,
+  markMessagesAsDelivered
 };

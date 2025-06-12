@@ -50,7 +50,13 @@
         </div>
 
         <div class="w-12 h-12 rounded-full bg-gray-500 overflow-hidden cursor-pointer">
-          <img id="current-user-avatar" src="./src/assets/images/profile.jpeg" alt="Profile" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/160?text=U'" />
+          <img 
+            id="current-user-avatar" 
+            src="./src/assets/images/profile.jpeg" 
+            alt="Profile" 
+            class="w-full h-full object-cover" 
+            onerror="this.src = generateInitialsAvatarUrl('U')"
+          />
         </div>
       </div>
 
@@ -108,19 +114,29 @@
         </div>
 
         <div id="welcome-screen" class="flex-1 flex flex-col items-center justify-center bg-[#222e35]">
+          <!-- Logo WhatsApp -->
           <div class="w-72 h-72 rounded-full bg-[#364147] flex items-center justify-center mb-8">
-            <div class="w-56 h-56 text-gray-500"></div>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-56 h-56 text-gray-500">
+              <path fill="currentColor" d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10a9.95 9.95 0 0 1-4.3-1.096L3 22l1.095-3.7A9.95 9.95 0 0 1 2 14C2 8.477 6.477 4 12 4zm0-2C5.373 0 0 5.373 0 12c0 2.344.676 4.537 1.838 6.38L0 24l5.62-1.838A9.956 9.956 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/>
+            </svg>
           </div>
-          <h1 class="text-3xl text-white font-light mb-3">WhatsApp pour Windows</h1>
-          <p class="text-gray-400 text-center max-w-md">
+
+          <!-- Titre -->
+          <h1 class="text-4xl text-white font-light mb-6">WhatsApp pour Windows</h1>
+
+          <!-- Description -->
+          <p class="text-[#8696a0] text-center max-w-md text-lg leading-relaxed mb-8">
             Envoyez et recevez des messages sans avoir à garder votre téléphone connecté.
-            <br />Utilisez WhatsApp sur un maximum de 4 appareils et 1 téléphone, simultanément.
+            <br><br>
+            Utilisez WhatsApp sur un maximum de 4 appareils et 1 téléphone, simultanément.
           </p>
-          <div class="mt-8 text-gray-400 text-sm flex items-center">
-            <span class="mr-2">
-              <div class="w-4 h-4"></div>
-            </span>
-            <span>Chiffrée de bout en bout</span>
+
+          <!-- Indicateur de chiffrement -->
+          <div class="flex items-center gap-3 text-[#8696a0] bg-[#182229] px-4 py-2 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
+              <path fill="currentColor" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12c5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.54-2.77 8.62-7 10.46c-4.23-1.84-7-5.92-7-10.46v-4.7l7-3.12z"/>
+            </svg>
+            <span class="text-sm">Chiffrée de bout en bout</span>
           </div>
         </div>
 
