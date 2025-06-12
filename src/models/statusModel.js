@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://serveur2.onrender.com';
 
 let statuses = [];
 

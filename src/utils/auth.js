@@ -107,7 +107,7 @@ export function register(phoneNumber, firstName, lastName, countryCode = 'SN') {
  * @param {string} phoneNumber - Numéro de téléphone de l'utilisateur
  * @param {string} countryCode - Code du pays
  */
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://serveur2.onrender.com';
 
 export async function login(phoneNumber, countryCode = 'SN') {
   try {

@@ -1,7 +1,7 @@
 import { updateLastMessage, createNewChat, getAllChats, getChatById } from './chatModel.js';
 
 // Modifier l'URL de l'API
-const API_URL = 'https://server-vo8j.onrender.com';
+const API_URL = 'https://serveur2.onrender.com';
 
 // Initialiser un objet vide pour les messages  
 let messages = {};

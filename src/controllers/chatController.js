@@ -27,21 +27,22 @@ function initNewChatButton() {
 
   newChatBtn.addEventListener('click', async () => {
     try {
-      await renderNewDiscussionView(handleNewChat);
+      await renderNewDiscussionView(handleContactSelect);
     } catch (error) {
       console.error('Error opening new discussion view:', error);
     }
   });
 }
 
-async function handleNewChat(contact) {
+async function handleContactSelect(contact) {
   try {
     if (!contact || !contact.id) {
       throw new Error('Contact invalide');
     }
 
-    // Créer ou récupérer le chat
+    // Créer ou récupérer le chat existant
     const chat = await createNewChat(contact);
+    
     if (!chat) {
       throw new Error('Erreur lors de la création du chat');
     }
@@ -50,16 +51,33 @@ async function handleNewChat(contact) {
     activeChat = chat;
     window.activeChat = chat;
 
-    // Mettre à jour l'interface
+    // Masquer l'écran de bienvenue s'il est visible
+    const welcomeScreen = document.getElementById('welcome-screen');
+    if (welcomeScreen) {
+      welcomeScreen.style.display = 'none';
+    }
+
+    // Afficher l'interface du chat
     showChatInterface();
+
+    // Mettre à jour l'interface
     renderChatHeader(chat);
-    renderMessages([]); // Commencer avec une liste vide de messages
+    
+    // Charger et afficher les messages
+    const messages = getMessagesByChatId(chat.id);
+    renderMessages(messages || []);
+
+    // Afficher le conteneur de saisie de message
+    const messageInput = document.getElementById('message-input-container');
+    if (messageInput) {
+      messageInput.style.display = 'flex';
+    }
 
     // Mettre à jour la liste des chats
     const allChats = getAllChats();
     renderChatList(allChats, handleChatClick);
 
-    // Créer un message de bienvenue
+    // Créer un message de bienvenue si c'est un nouveau chat
     if (!chat.lastMessage) {
       const welcomeMessage = {
         id: Date.now().toString(),
@@ -75,9 +93,14 @@ async function handleNewChat(contact) {
     }
 
   } catch (error) {
-    console.error('Erreur handleNewChat:', error);
-    showNotification('Erreur lors de la création de la discussion', 'error');
+    console.error('Erreur handleContactSelect:', error);
+    showNotification('Erreur lors de l\'ouverture de la discussion', 'error');
   }
+}
+
+// Fonction pour gérer les nouveaux chats (ancienne fonction handleNewChat renommée)
+async function handleNewChat(contact) {
+  return await handleContactSelect(contact);
 }
 
 function showChatInterface() {
@@ -237,56 +260,20 @@ function simulateReply(chatId) {
   }, 2000);
 }
 
-// Message reçu
-const message = {
-  text: "Message reçu",
-  isMe: false, // Pour les messages que vous recevez
-  timestamp: "..."
-};
-
-async function handleContactSelect(contact) {
-  try {
-    // Créer ou récupérer le chat existant
-    const chat = await createNewChat(contact);
-    
-    if (!chat) {
-      throw new Error('Erreur lors de la création du chat');
-    }
-
-    // Définir le chat actif
-    activeChat = chat;
-    window.activeChat = chat;
-
-    // Masquer l'écran de bienvenue s'il est visible
-    const welcomeScreen = document.getElementById('welcome-screen');
-    if (welcomeScreen) {
-      welcomeScreen.style.display = 'none';
-    }
-
-    // Afficher l'interface du chat
-    showChatInterface();
-
-    // Mettre à jour l'interface
-    renderChatHeader(chat);
-    
-    // Charger et afficher les messages
-    const messages = getMessagesByChatId(chat.id);
-    renderMessages(messages || []);
-
-    // Afficher le conteneur de saisie de message
-    const messageInput = document.getElementById('message-input-container');
-    if (messageInput) {
-      messageInput.style.display = 'flex';
-    }
-
-    // Mettre à jour la liste des chats
-    const allChats = getAllChats();
-    renderChatList(allChats, handleChatClick);
-
-  } catch (error) {
-    console.error('Erreur handleContactSelect:', error);
-    showNotification('Erreur lors de l\'ouverture de la discussion', 'error');
-  }
+function showNotification(message, type = 'success') {
+  const notification = document.createElement('div');
+  notification.className = `fixed bottom-4 right-4 p-4 rounded-lg ${
+    type === 'success' ? 'bg-green-500' : 
+    type === 'error' ? 'bg-red-500' : 
+    'bg-blue-500'
+  } text-white shadow-lg z-50 notification`;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
 }
 
 export { initChat };

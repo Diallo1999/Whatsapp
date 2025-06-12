@@ -1,7 +1,7 @@
 import { generateRandomAvatar } from '../utils/helpers.js';
 import { generateInitialsAvatar } from '../utils/avatarGenerator.js';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://serveur2.onrender.com';
 
 // Initialiser les tableaux vides
 let chats = [];
@@ -262,7 +262,7 @@ async function createNewChat(contact) {
 
     try {
       // Sauvegarder dans l'API
-      const response = await fetch('http://localhost:3000/chats', {
+      const response = await fetch('https://serveur2.onrender.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -317,7 +317,7 @@ async function createNewGroup(groupData) {
 
     try {
       // Sauvegarder dans l'API
-      const response = await fetch('http://localhost:3000/chats', {
+      const response = await fetch('https://serveur2.onrender.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
